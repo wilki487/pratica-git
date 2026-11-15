@@ -1,0 +1,203 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  runApp(const WilkkApp());
+}
+
+class WilkkApp extends StatelessWidget {
+  const WilkkApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Wilkk – Seu Bebê Virtual',
+      theme: ThemeData(primaryColor: Colors.red[800]),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+class WilkkState {
+  double fome;
+  double diversao;
+  double sono;
+  int xp;
+  int nivel;
+
+  WilkkState({
+    this.fome = 70,
+    this.diversao = 80,
+    this.sono = 60,
+    this.xp = 0,
+    this.nivel = 1,
+  });
+
+  Future<void> salvar() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble("fome", fome);
+    await prefs.setDouble("diversao", diversao);
+    await prefs.setDouble("sono", sono);
+    await prefs.setInt("xp", xp);
+    await prefs.setInt("nivel", nivel);
+  }
+
+  Future<void> carregar() async {
+    final prefs = await SharedPreferences.getInstance();
+    fome = prefs.getDouble("fome") ?? 70;
+    diversao = prefs.getDouble("diversao") ?? 80;
+    sono = prefs.getDouble("sono") ?? 60;
+    xp = prefs.getInt("xp") ?? 0;
+    nivel = prefs.getInt("nivel") ?? 1;
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.red[900],
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Oi papai! 😊", style: TextStyle(color: Colors.white, fontSize: 28)),
+            SizedBox(height: 16),
+            Text("Eu sou o Wilkk!", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final WilkkState wilkk = WilkkState();
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
+
+  Future<void> _carregarDados() async {
+    await wilkk.carregar();
+    setState(() {});
+  }
+
+  Future<void> _atualizarEstado() async {
+    wilkk.xp += 10;
+    if (wilkk.xp >= wilkk.nivel * 100) {
+      wilkk.nivel++;
+    }
+    await wilkk.salvar();
+    setState(() {});
+  }
+
+  Widget _barraStatus(String label, double valor, Color cor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("$label: ${valor.toStringAsFixed(0)}%", style: const TextStyle(color: Colors.white)),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(value: valor / 100, backgroundColor: Colors.grey[700], color: cor),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.red[800],
+        title: const Text("Wilkk – Seu Bebê Virtual"),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Container(
+              height: 220,
+              width: 220,
+              decoration: const BoxDecoration(
+                image: DecorationImage(image: AssetImage("assets/wilkk_flamengo.png"), fit: BoxFit.contain),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text("⭐ Nível ${wilkk.nivel} | XP ${wilkk.xp}", style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            _barraStatus("🍼 Fome", wilkk.fome, Colors.orange),
+            _barraStatus("🧸 Diversão", wilkk.diversao, Colors.pink),
+            _barraStatus("💤 Sono", wilkk.sono, Colors.blue),
+            const SizedBox(height: 30),
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16), backgroundColor: Colors.orange),
+                  onPressed: () {
+                    setState(() { wilkk.fome = 100; });
+                    _atualizarEstado();
+                  },
+                  child: const Text("🍼 Alimentar", style: TextStyle(fontSize: 18)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16), backgroundColor: Colors.pink),
+                  onPressed: () {
+                    setState(() { wilkk.diversao = 100; });
+                    _atualizarEstado();
+                  },
+                  child: const Text("⚽ Brincar", style: TextStyle(fontSize: 18)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16), backgroundColor: Colors.blue),
+                  onPressed: () {
+                    setState(() { wilkk.sono = 100; });
+                    _atualizarEstado();
+                  },
+                  child: const Text("😴 Dormir", style: TextStyle(fontSize: 18)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16), backgroundColor: Colors.red[800]),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("💬 Wilkk: Oi papai! 😍")));
+                    _atualizarEstado();
+                  },
+                  child: const Text("💬 Falar", style: TextStyle(fontSize: 18)),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
